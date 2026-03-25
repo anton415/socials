@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.serdyuchenko.socials.entity.PostEntity;
+import com.serdyuchenko.socials.entity.SubscriptionEntity;
 import com.serdyuchenko.socials.entity.UserEntity;
 
 @SpringBootTest
@@ -21,6 +22,9 @@ public class PostRepositoryTest extends AbstractRepositoryTest {
 
 	@Autowired
 	private PostRepository postRepository;
+
+	@Autowired
+	private SubscriptionRepository subscriptionRepository;
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
@@ -118,6 +122,60 @@ public class PostRepositoryTest extends AbstractRepositoryTest {
 			.containsExactly("Third post", "Second post");
 	}
 
+	@Test
+	@DisplayName("Должен обновлять название и описание поста")
+	public void whenUpdateTitleAndTextByIdThenPostShouldBeUpdated() {
+		var user = saveUser("author", "author@example.com");
+		var post = postRepository.save(createPost(user, "Old title", "Old text"));
+
+		var updatedRows = postRepository.updateTitleAndTextById(post.getId(), "New title", "New text");
+		var updatedPost = postRepository.findById(post.getId());
+
+		assertThat(updatedRows).isEqualTo(1);
+		assertThat(updatedPost).isPresent();
+		assertThat(updatedPost.get().getTitle()).isEqualTo("New title");
+		assertThat(updatedPost.get().getText()).isEqualTo("New text");
+	}
+
+	@Test
+	@DisplayName("Должен удалять пост через HQL")
+	public void whenDeletePostByIdThenPostShouldBeRemoved() {
+		var user = saveUser("author", "author@example.com");
+		var post = postRepository.save(createPost(user, "Post title", "Post text"));
+
+		var deletedRows = postRepository.deletePostById(post.getId());
+
+		assertThat(deletedRows).isEqualTo(1);
+		assertThat(postRepository.findById(post.getId())).isEmpty();
+	}
+
+	@Test
+	@DisplayName("Должен возвращать посты подписок пользователя от новых к старым с пагинацией")
+	public void whenFindSubscriberFeedByUserIdThenReturnPagedPostsOrderedByCreatedDesc() {
+		var viewer = saveUser("viewer", "viewer@example.com");
+		var firstAuthor = saveUser("first-author", "first-author@example.com");
+		var secondAuthor = saveUser("second-author", "second-author@example.com");
+		var outsider = saveUser("outsider", "outsider@example.com");
+		subscriptionRepository.save(createSubscription(viewer, firstAuthor));
+		subscriptionRepository.save(createSubscription(viewer, secondAuthor));
+
+		var oldestFollowedPost = postRepository.save(createPost(firstAuthor, "Oldest followed", "Text"));
+		var newestFollowedPost = postRepository.save(createPost(secondAuthor, "Newest followed", "Text"));
+		var middleFollowedPost = postRepository.save(createPost(firstAuthor, "Middle followed", "Text"));
+		var outsiderPost = postRepository.save(createPost(outsider, "Outsider post", "Text"));
+		updateCreated(oldestFollowedPost, OffsetDateTime.parse("2026-03-20T10:00:00Z"));
+		updateCreated(newestFollowedPost, OffsetDateTime.parse("2026-03-22T14:00:00Z"));
+		updateCreated(middleFollowedPost, OffsetDateTime.parse("2026-03-21T12:00:00Z"));
+		updateCreated(outsiderPost, OffsetDateTime.parse("2026-03-23T15:00:00Z"));
+
+		var posts = postRepository.findSubscriberFeedByUserId(viewer.getId(), PageRequest.of(0, 2));
+
+		assertThat(posts)
+			.hasSize(2)
+			.extracting(PostEntity::getTitle)
+			.containsExactly("Newest followed", "Middle followed");
+	}
+
 	private PostEntity createPost(final UserEntity user, final String title, final String text) {
 		var post = new PostEntity();
 		post.setUser(user);
@@ -132,6 +190,16 @@ public class PostRepositoryTest extends AbstractRepositoryTest {
 		user.setEmail(email);
 		user.setPassword("password");
 		return userRepository.save(user);
+	}
+
+	private SubscriptionEntity createSubscription(
+		final UserEntity follower,
+		final UserEntity followee
+	) {
+		var subscription = new SubscriptionEntity();
+		subscription.setFollower(follower);
+		subscription.setFollowee(followee);
+		return subscription;
 	}
 
 	// нужен только для того, чтобы в тестах сделать created предсказуемым

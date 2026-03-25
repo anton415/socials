@@ -61,6 +61,25 @@ public class FriendshipRepositoryTest extends AbstractRepositoryTest {
 			);
 	}
 
+	@Test
+	@DisplayName("Должен возвращать всех друзей пользователя")
+	public void whenFindFriendsByUserIdThenReturnFriends() {
+		var user = saveUser("john", "john@example.com");
+		var firstFriend = saveUser("jane", "jane@example.com");
+		var secondFriend = saveUser("alex", "alex@example.com");
+		var outsider = saveUser("kate", "kate@example.com");
+		friendshipRepository.save(createFriendship(user, firstFriend));
+		friendshipRepository.save(createFriendship(user, secondFriend));
+		friendshipRepository.save(createFriendship(outsider, user));
+
+		var friends = friendshipRepository.findFriendsByUserId(user.getId());
+
+		assertThat(friends)
+			.hasSize(2)
+			.extracting(UserEntity::getUsername)
+			.containsExactlyInAnyOrder("jane", "alex");
+	}
+
 	private FriendshipEntity createFriendship(final UserEntity user, final UserEntity friend) {
 		var friendship = new FriendshipEntity();
 		friendship.setUser(user);

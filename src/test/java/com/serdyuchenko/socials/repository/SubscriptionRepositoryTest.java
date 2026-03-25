@@ -62,6 +62,25 @@ public class SubscriptionRepositoryTest extends AbstractRepositoryTest {
 			);
 	}
 
+	@Test
+	@DisplayName("Должен возвращать всех подписчиков пользователя")
+	public void whenFindFollowersByUserIdThenReturnFollowers() {
+		var followee = saveUser("followee", "followee@example.com");
+		var firstFollower = saveUser("first-follower", "first-follower@example.com");
+		var secondFollower = saveUser("second-follower", "second-follower@example.com");
+		var outsider = saveUser("outsider", "outsider@example.com");
+		subscriptionRepository.save(createSubscription(firstFollower, followee));
+		subscriptionRepository.save(createSubscription(secondFollower, followee));
+		subscriptionRepository.save(createSubscription(outsider, firstFollower));
+
+		var followers = subscriptionRepository.findFollowersByUserId(followee.getId());
+
+		assertThat(followers)
+			.hasSize(2)
+			.extracting(UserEntity::getUsername)
+			.containsExactlyInAnyOrder("first-follower", "second-follower");
+	}
+
 	// Создает подписку
 	private SubscriptionEntity createSubscription(
 		final UserEntity follower,

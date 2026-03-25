@@ -62,6 +62,25 @@ public class ImageRepositoryTest extends AbstractRepositoryTest {
 			);
 	}
 
+	@Test
+	@DisplayName("Должен удалять изображения, прикрепленные к посту")
+	public void whenDeleteAllByPostIdThenRemoveOnlyPostImages() {
+		var user = saveUser("author", "author@example.com");
+		var targetPost = savePost(user, "Target post", "Text");
+		var otherPost = savePost(user, "Other post", "Text");
+		imageRepository.save(createImage(targetPost, "https://job4j.ru/assets/img/first.png"));
+		imageRepository.save(createImage(targetPost, "https://job4j.ru/assets/img/second.png"));
+		imageRepository.save(createImage(otherPost, "https://job4j.ru/assets/img/other.png"));
+
+		var deletedRows = imageRepository.deleteAllByPostId(targetPost.getId());
+
+		assertThat(deletedRows).isEqualTo(2);
+		assertThat(imageRepository.findAll())
+			.hasSize(1)
+			.extracting(ImageEntity::getImageUrl)
+			.containsExactly("https://job4j.ru/assets/img/other.png");
+	}
+
 	private ImageEntity createImage(final PostEntity post, final String imageUrl) {
 		var image = new ImageEntity();
 		image.setPost(post);

@@ -41,6 +41,19 @@ public class UserRepositoryTest extends AbstractRepositoryTest {
 		assertThat(persons).extracting(UserEntity::getUsername).contains("John Doe", "Jane Doe");
 	}
 
+	@Test
+	@DisplayName("Должен находить пользователя по логину и паролю")
+	public void whenFindByUsernameAndPasswordThenReturnUser() {
+		var person = createUser("john", "john@example.com");
+		person.setPassword("secret");
+		userRepository.save(person);
+
+		var foundPerson = userRepository.findByUsernameAndPassword("john", "secret");
+
+		assertThat(foundPerson).isPresent();
+		assertThat(foundPerson.get().getEmail()).isEqualTo("john@example.com");
+	}
+
 	// Создает пользователя для теста
 	private UserEntity createUser(final String username, final String email) {
 		var user = new UserEntity();
