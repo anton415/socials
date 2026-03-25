@@ -15,7 +15,7 @@ CREATE TABLE posts (
     user_id UUID NOT NULL REFERENCES users (id),
     title VARCHAR NOT NULL,
     text TEXT NOT NULL,
-    created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Для поста можно хранить прикрепленные изображения.
