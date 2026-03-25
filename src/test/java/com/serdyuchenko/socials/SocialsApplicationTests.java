@@ -12,5 +12,4 @@ class SocialsApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
