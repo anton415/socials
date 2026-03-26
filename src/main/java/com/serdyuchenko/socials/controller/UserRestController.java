@@ -1,8 +1,8 @@
 package com.serdyuchenko.socials.controller;
 
+import java.net.URI;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.serdyuchenko.socials.entity.UserEntity;
 import com.serdyuchenko.socials.repository.UserRepository;
@@ -31,7 +31,13 @@ public class UserRestController {
 
 	@PostMapping
 	public ResponseEntity<UserEntity> save(@RequestBody final UserEntity user) {
-		return ResponseEntity.ok(userRepository.save(user));
+		final UserEntity savedUser = userRepository.save(user);
+		final URI location = ServletUriComponentsBuilder
+			.fromCurrentRequest()
+			.path("/{id}")
+			.buildAndExpand(savedUser.getId())
+			.toUri();
+		return ResponseEntity.created(location).body(savedUser);
 	}
 
 	@GetMapping("/{userId}")
@@ -42,14 +48,20 @@ public class UserRestController {
 	}
 
 	@PutMapping
-	@ResponseStatus(HttpStatus.OK)
-	public void update(@RequestBody final UserEntity user) {
+	public ResponseEntity<Void> update(@RequestBody final UserEntity user) {
+		if (user.getId() == null || !userRepository.existsById(user.getId())) {
+			return ResponseEntity.notFound().build();
+		}
 		userRepository.save(user);
+		return ResponseEntity.ok().build();
 	}
 
 	@DeleteMapping("/{userId}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteById(@PathVariable final UUID userId) {
+	public ResponseEntity<Void> deleteById(@PathVariable final UUID userId) {
+		if (!userRepository.existsById(userId)) {
+			return ResponseEntity.notFound().build();
+		}
 		userRepository.deleteById(userId);
+		return ResponseEntity.noContent().build();
 	}
 }
