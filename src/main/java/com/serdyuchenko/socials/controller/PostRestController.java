@@ -1,6 +1,7 @@
 package com.serdyuchenko.socials.controller;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.serdyuchenko.socials.dto.UserPostsDto;
 import com.serdyuchenko.socials.entity.PostEntity;
 import com.serdyuchenko.socials.repository.PostRepository;
+import com.serdyuchenko.socials.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class PostRestController {
 
 	private final PostRepository postRepository;
+
+	private final UserRepository userRepository;
 
 	@PostMapping
 	public ResponseEntity<PostEntity> save(@RequestBody final PostEntity post) {
@@ -45,6 +50,26 @@ public class PostRestController {
 		return postRepository.findById(postId)
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PostMapping("/by-users")
+	public ResponseEntity<List<UserPostsDto>> findByUserIds(@RequestBody final List<UUID> userIds) {
+		var users = userRepository.findAllById(userIds);
+		var result = users.stream()
+			.map(user -> new UserPostsDto(
+				user.getId(),
+				user.getUsername(),
+				postRepository.findAllByUser(user).stream()
+					.map(post -> new UserPostsDto.PostDto(
+						post.getId(),
+						post.getTitle(),
+						post.getText(),
+						post.getCreated()
+					))
+					.toList()
+			))
+			.toList();
+		return ResponseEntity.ok(result);
 	}
 
 	@PutMapping
