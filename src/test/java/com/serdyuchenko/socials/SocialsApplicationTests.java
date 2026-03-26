@@ -5,8 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(properties = {
 	"spring.ai.openai-sdk.api-key=test",
-	"spring.liquibase.enabled=false",
-	"spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration"
+	"spring.liquibase.enabled=false"
 })
 class SocialsApplicationTests {
 	@Test
