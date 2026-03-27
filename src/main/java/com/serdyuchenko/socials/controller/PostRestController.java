@@ -23,6 +23,9 @@ import com.serdyuchenko.socials.dto.PostUpdateRequestDto;
 import com.serdyuchenko.socials.dto.UserPostsDto;
 import com.serdyuchenko.socials.service.PostService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -31,11 +34,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/post")
 @RequiredArgsConstructor
+@Tag(name = "Posts", description = "Операции с постами")
 public class PostRestController {
 
 	private final PostService postService;
 
 	@PostMapping
+	@Operation(summary = "Создать пост")
 	public ResponseEntity<PostResponseDto> save(@Valid @RequestBody final PostCreateRequestDto post) {
 		final PostResponseDto savedPost = postService.createPost(post);
 		final URI location = ServletUriComponentsBuilder
@@ -47,6 +52,7 @@ public class PostRestController {
 	}
 
 	@GetMapping("/{postId}")
+	@Operation(summary = "Получить пост по id")
 	public ResponseEntity<PostResponseDto> findById(@PathVariable final UUID postId) {
 		return postService.findById(postId)
 			.map(ResponseEntity::ok)
@@ -54,11 +60,13 @@ public class PostRestController {
 	}
 
 	@PostMapping("/by-users")
+	@Operation(summary = "Получить посты по списку пользователей")
 	public ResponseEntity<List<UserPostsDto>> findByUserIds(@RequestBody final List<UUID> userIds) {
 		return ResponseEntity.ok(postService.findByUserIds(userIds));
 	}
 
 	@PutMapping
+	@Operation(summary = "Обновить пост")
 	public ResponseEntity<Void> update(@Valid @RequestBody final PostUpdateRequestDto post) {
 		if (!postService.updatePost(post)) {
 			return ResponseEntity.notFound().build();
@@ -67,6 +75,7 @@ public class PostRestController {
 	}
 
 	@DeleteMapping("/{postId}")
+	@Operation(summary = "Удалить пост по id")
 	public ResponseEntity<Void> deleteById(@PathVariable final UUID postId) {
 		if (!postService.deleteById(postId)) {
 			return ResponseEntity.notFound().build();

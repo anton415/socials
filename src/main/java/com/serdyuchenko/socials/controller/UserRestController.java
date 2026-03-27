@@ -21,6 +21,9 @@ import com.serdyuchenko.socials.dto.UserResponseDto;
 import com.serdyuchenko.socials.dto.UserUpdateRequestDto;
 import com.serdyuchenko.socials.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -29,11 +32,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "Операции с пользователями")
 public class UserRestController {
 
 	private final UserService userService;
 
 	@PostMapping
+	@Operation(summary = "Создать пользователя")
 	public ResponseEntity<UserResponseDto> save(@Valid @RequestBody final UserCreateRequestDto user) {
 		final UserResponseDto savedUser = userService.createUser(user);
 		final URI location = ServletUriComponentsBuilder
@@ -45,6 +50,7 @@ public class UserRestController {
 	}
 
 	@GetMapping("/{userId}")
+	@Operation(summary = "Получить пользователя по id")
 	public ResponseEntity<UserResponseDto> findById(@PathVariable final UUID userId) {
 		return userService.findById(userId)
 			.map(ResponseEntity::ok)
@@ -52,6 +58,7 @@ public class UserRestController {
 	}
 
 	@PutMapping
+	@Operation(summary = "Обновить пользователя")
 	public ResponseEntity<Void> update(@Valid @RequestBody final UserUpdateRequestDto user) {
 		if (!userService.updateUser(user)) {
 			return ResponseEntity.notFound().build();
@@ -60,6 +67,7 @@ public class UserRestController {
 	}
 
 	@DeleteMapping("/{userId}")
+	@Operation(summary = "Удалить пользователя по id")
 	public ResponseEntity<Void> deleteById(@PathVariable final UUID userId) {
 		if (!userService.deleteById(userId)) {
 			return ResponseEntity.notFound().build();
