@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.serdyuchenko.socials.entity.UserEntity;
-import com.serdyuchenko.socials.repository.UserRepository;
+import com.serdyuchenko.socials.dto.UserCreateRequestDto;
+import com.serdyuchenko.socials.dto.UserResponseDto;
+import com.serdyuchenko.socials.dto.UserUpdateRequestDto;
+import com.serdyuchenko.socials.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,41 +31,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserRestController {
 
-	private final UserRepository userRepository;
+	private final UserService userService;
 
 	@PostMapping
-	public ResponseEntity<UserEntity> save(@Valid @RequestBody final UserEntity user) {
-		final UserEntity savedUser = userRepository.save(user);
+	public ResponseEntity<UserResponseDto> save(@Valid @RequestBody final UserCreateRequestDto user) {
+		final UserResponseDto savedUser = userService.createUser(user);
 		final URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
 			.path("/{id}")
-			.buildAndExpand(savedUser.getId())
+			.buildAndExpand(savedUser.id())
 			.toUri();
 		return ResponseEntity.created(location).body(savedUser);
 	}
 
 	@GetMapping("/{userId}")
-	public ResponseEntity<UserEntity> findById(@PathVariable final UUID userId) {
-		return userRepository.findById(userId)
+	public ResponseEntity<UserResponseDto> findById(@PathVariable final UUID userId) {
+		return userService.findById(userId)
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PutMapping
-	public ResponseEntity<Void> update(@Valid @RequestBody final UserEntity user) {
-		if (user.getId() == null || !userRepository.existsById(user.getId())) {
+	public ResponseEntity<Void> update(@Valid @RequestBody final UserUpdateRequestDto user) {
+		if (!userService.updateUser(user)) {
 			return ResponseEntity.notFound().build();
 		}
-		userRepository.save(user);
 		return ResponseEntity.ok().build();
 	}
 
 	@DeleteMapping("/{userId}")
 	public ResponseEntity<Void> deleteById(@PathVariable final UUID userId) {
-		if (!userRepository.existsById(userId)) {
+		if (!userService.deleteById(userId)) {
 			return ResponseEntity.notFound().build();
 		}
-		userRepository.deleteById(userId);
 		return ResponseEntity.noContent().build();
 	}
 }

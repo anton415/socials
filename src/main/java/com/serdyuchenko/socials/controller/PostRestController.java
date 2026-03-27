@@ -17,10 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.serdyuchenko.socials.dto.PostCreateRequestDto;
+import com.serdyuchenko.socials.dto.PostResponseDto;
+import com.serdyuchenko.socials.dto.PostUpdateRequestDto;
 import com.serdyuchenko.socials.dto.UserPostsDto;
-import com.serdyuchenko.socials.entity.PostEntity;
-import com.serdyuchenko.socials.repository.PostRepository;
-import com.serdyuchenko.socials.repository.UserRepository;
+import com.serdyuchenko.socials.service.PostService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,63 +33,44 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostRestController {
 
-	private final PostRepository postRepository;
-
-	private final UserRepository userRepository;
+	private final PostService postService;
 
 	@PostMapping
-	public ResponseEntity<PostEntity> save(@Valid @RequestBody final PostEntity post) {
-		final PostEntity savedPost = postRepository.save(post);
+	public ResponseEntity<PostResponseDto> save(@Valid @RequestBody final PostCreateRequestDto post) {
+		final PostResponseDto savedPost = postService.createPost(post);
 		final URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
 			.path("/{id}")
-			.buildAndExpand(savedPost.getId())
+			.buildAndExpand(savedPost.id())
 			.toUri();
 		return ResponseEntity.created(location).body(savedPost);
 	}
 
 	@GetMapping("/{postId}")
-	public ResponseEntity<PostEntity> findById(@PathVariable final UUID postId) {
-		return postRepository.findById(postId)
+	public ResponseEntity<PostResponseDto> findById(@PathVariable final UUID postId) {
+		return postService.findById(postId)
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PostMapping("/by-users")
 	public ResponseEntity<List<UserPostsDto>> findByUserIds(@RequestBody final List<UUID> userIds) {
-		var users = userRepository.findAllById(userIds);
-		var result = users.stream()
-			.map(user -> new UserPostsDto(
-				user.getId(),
-				user.getUsername(),
-				postRepository.findAllByUser(user).stream()
-					.map(post -> new UserPostsDto.PostDto(
-						post.getId(),
-						post.getTitle(),
-						post.getText(),
-						post.getCreated()
-					))
-					.toList()
-			))
-			.toList();
-		return ResponseEntity.ok(result);
+		return ResponseEntity.ok(postService.findByUserIds(userIds));
 	}
 
 	@PutMapping
-	public ResponseEntity<Void> update(@Valid @RequestBody final PostEntity post) {
-		if (post.getId() == null || !postRepository.existsById(post.getId())) {
+	public ResponseEntity<Void> update(@Valid @RequestBody final PostUpdateRequestDto post) {
+		if (!postService.updatePost(post)) {
 			return ResponseEntity.notFound().build();
 		}
-		postRepository.save(post);
 		return ResponseEntity.ok().build();
 	}
 
 	@DeleteMapping("/{postId}")
 	public ResponseEntity<Void> deleteById(@PathVariable final UUID postId) {
-		if (!postRepository.existsById(postId)) {
+		if (!postService.deleteById(postId)) {
 			return ResponseEntity.notFound().build();
 		}
-		postRepository.deleteById(postId);
 		return ResponseEntity.noContent().build();
 	}
 }

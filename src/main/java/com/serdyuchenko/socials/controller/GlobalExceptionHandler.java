@@ -45,14 +45,29 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(new ValidationErrorResponse(violations), HttpStatus.BAD_REQUEST);
 	}
 
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<Map<String, String>> catchIllegalArgumentException(
+		final IllegalArgumentException exception,
+		final HttpServletRequest request
+	) {
+		return new ResponseEntity<>(buildDetails(exception.getMessage(), request), HttpStatus.BAD_REQUEST);
+	}
+
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Map<String, String>> catchDataIntegrityViolationException(
 		final DataIntegrityViolationException exception,
 		final HttpServletRequest request
 	) {
+		return new ResponseEntity<>(
+			buildDetails(exception.getMostSpecificCause().getMessage(), request),
+			HttpStatus.BAD_REQUEST
+		);
+	}
+
+	private Map<String, String> buildDetails(final String message, final HttpServletRequest request) {
 		final Map<String, String> details = new HashMap<>();
-		details.put("message", exception.getMostSpecificCause().getMessage());
+		details.put("message", message);
 		details.put("path", request.getRequestURI());
-		return new ResponseEntity<>(details, HttpStatus.BAD_REQUEST);
+		return details;
 	}
 }
