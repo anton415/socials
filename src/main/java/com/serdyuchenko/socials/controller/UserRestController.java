@@ -3,6 +3,8 @@ package com.serdyuchenko.socials.controller;
 import java.net.URI;
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +32,7 @@ public class UserRestController {
 	private final UserRepository userRepository;
 
 	@PostMapping
-	public ResponseEntity<UserEntity> save(@RequestBody final UserEntity user) {
+	public ResponseEntity<UserEntity> save(@Valid @RequestBody final UserEntity user) {
 		final UserEntity savedUser = userRepository.save(user);
 		final URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
@@ -48,7 +50,7 @@ public class UserRestController {
 	}
 
 	@PutMapping
-	public ResponseEntity<Void> update(@RequestBody final UserEntity user) {
+	public ResponseEntity<Void> update(@Valid @RequestBody final UserEntity user) {
 		if (user.getId() == null || !userRepository.existsById(user.getId())) {
 			return ResponseEntity.notFound().build();
 		}

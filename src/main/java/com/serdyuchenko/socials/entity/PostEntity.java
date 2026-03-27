@@ -12,6 +12,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,13 +30,16 @@ public class PostEntity {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
+	@NotNull(message = "user не может быть null")
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id", nullable = false)
 	private UserEntity user;
 
+	@NotBlank(message = "title не может быть пустым")
 	@Column(nullable = false)
 	private String title;
 
+	@NotBlank(message = "text не может быть пустым")
 	@Column(nullable = false)
 	private String text;
 

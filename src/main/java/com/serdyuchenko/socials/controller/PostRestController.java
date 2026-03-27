@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +37,7 @@ public class PostRestController {
 	private final UserRepository userRepository;
 
 	@PostMapping
-	public ResponseEntity<PostEntity> save(@RequestBody final PostEntity post) {
+	public ResponseEntity<PostEntity> save(@Valid @RequestBody final PostEntity post) {
 		final PostEntity savedPost = postRepository.save(post);
 		final URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
@@ -73,7 +75,7 @@ public class PostRestController {
 	}
 
 	@PutMapping
-	public ResponseEntity<Void> update(@RequestBody final PostEntity post) {
+	public ResponseEntity<Void> update(@Valid @RequestBody final PostEntity post) {
 		if (post.getId() == null || !postRepository.existsById(post.getId())) {
 			return ResponseEntity.notFound().build();
 		}
